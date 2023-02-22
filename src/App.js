@@ -1,23 +1,46 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect } from 'react';
+import {appWindow} from '@tauri-apps/api/window'
+import { invoke } from "@tauri-apps/api/tauri"
+import { open } from '@tauri-apps/api/dialog';
+import { appDir } from '@tauri-apps/api/path';
 
 function App() {
+  const [directory, setDirectory] = useState('');
+
+  const handleClick = () => {
+    invoke('start_scan')
+  }
+
+  const handleStop = () => {
+    invoke('stop_scan');
+  }
+
+  const handleSelectDirectory = async () => {
+    const selected = await open({
+      directory: true,
+      defaultPath: await appDir(),
+    })
+    setDirectory(selected);
+    invoke('set_directory', { directory: selected });
+  }
+
+  const handleStart = async () => {
+    invoke('start_scan');
+  }
+
+  useEffect(() => {
+    appWindow.listen('event-name', (e) => {
+      console.log('e:', e)
+    })
+  }, []);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <p>{directory}</p>
+      <button onClick={handleSelectDirectory}>Open</button>
+      <button onClick={handleStart}>start</button>
+      {/* <button onClick={handleClick}>start</button>
+      <button onClick={handleStop}>stop</button> */}
     </div>
   );
 }
